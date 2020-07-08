@@ -25,65 +25,75 @@ import itertools
 from tqdm import tqdm
 import jsonschema
 
-header_type = numpy.dtype([
-    ('hdate', 'b', 24),
-    ('xfcst', '>f4'),
-    ('map_source', 'b', 32),
-    ('field', 'b', 9),
-    ('units', 'b', 25),
-    ('desc', 'b', 46),
-    ('xlvl', '>f4'),
-    ('nx', '>i4'),
-    ('ny', '>i4'),
-    ('iproj', '>i4')])
+header_type = numpy.dtype(
+    [
+        ("hdate", "b", 24),
+        ("xfcst", ">f4"),
+        ("map_source", "b", 32),
+        ("field", "b", 9),
+        ("units", "b", 25),
+        ("desc", "b", 46),
+        ("xlvl", ">f4"),
+        ("nx", ">i4"),
+        ("ny", ">i4"),
+        ("iproj", ">i4"),
+    ]
+)
 
 
-proj_cylindrical_equidistant = numpy.dtype([
-    ('startloc', 'b', 8),
-    ('startlat', '>f4'),
-    ('startlon', '>f4'),
-    ('deltalat', '>f4'),
-    ('deltalon', '>f4'),
-    ('earth_radius', '>f4')])
+proj_cylindrical_equidistant = numpy.dtype(
+    [
+        ("startloc", "b", 8),
+        ("startlat", ">f4"),
+        ("startlon", ">f4"),
+        ("deltalat", ">f4"),
+        ("deltalon", ">f4"),
+        ("earth_radius", ">f4"),
+    ]
+)
 
 
 config_schema = {
-    'type': 'array',
-    'items': {
-            'type': 'object',
-            'properties': {
-                'field': {'type': 'string'},
-                'netcdf_path': {'type': 'string'},
-                'netcdf_variable': {'type': 'string'},
-                'description': {'type': 'string'},
-                'source': {
-                    'type': 'object',
-                    'properties': {
-                        'name': {'type': 'string'},
-                        'axes': {'type': 'object',
-                            'additionalProperties': {'type': 'string'},
-                            'propertyNames': {'pattern': '[tzxy]'},
-                        },
-                        'bounds': {'type': 'object',
-                            'additionalProperties': {'type': 'array',
-                                'minItems': 2,
-                                'maxItems': 2,
-                                'items': {'type': ['number', 'string']},
-                            },
-                            'propertyNames': {'pattern': '[tzxy]'},
-                        },
-                        'projection': {'type': 'string',
-                            'enum': ['cylindrical_equidistant'],    
-                        },
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "field": {"type": "string"},
+            "netcdf_path": {"type": "string"},
+            "netcdf_variable": {"type": "string"},
+            "description": {"type": "string"},
+            "source": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "axes": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                        "propertyNames": {"pattern": "[tzxy]"},
                     },
-                    'additionalProperties': False,
-                    'required': ['axes', 'projection']
+                    "bounds": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "items": {"type": ["number", "string"]},
+                        },
+                        "propertyNames": {"pattern": "[tzxy]"},
+                    },
+                    "projection": {
+                        "type": "string",
+                        "enum": ["cylindrical_equidistant"],
+                    },
                 },
+                "additionalProperties": False,
+                "required": ["axes", "projection"],
             },
-            'additionalProperties': False,
-            'required': ['field', 'netcdf_path', 'netcdf_variable', 'source']
-        }
-    }
+        },
+        "additionalProperties": False,
+        "required": ["field", "netcdf_path", "netcdf_variable", "source"],
+    },
+}
 
 
 def write_message(message, buff):
@@ -96,7 +106,7 @@ def write_message(message, buff):
         message: Message (numpy object) to write
         buff: Output buffer
     """
-    size = numpy.zeros((1,), dtype='>i4')
+    size = numpy.zeros((1,), dtype=">i4")
     size[0] = message.nbytes
 
     buff.write(size)
@@ -114,8 +124,9 @@ def sanity_check_config(config):
 
 
 def encode_text(out, text):
-    enc = numpy.frombuffer(text.encode('utf-8'), dtype='b')
-    out[0, :enc.size] = enc
+    enc = numpy.frombuffer(text.encode("utf-8"), dtype="b")
+    out[0, : enc.size] = enc
+
 
 def write_slice(var, config, output):
     """
@@ -131,45 +142,49 @@ def write_slice(var, config, output):
     if var.ndim != 2:
         raise Exception("Slice is not 2D")
 
-    t = var[config['source']['axes']['t']].values
+    t = var[config["source"]["axes"]["t"]].values
     try:
-        z = var[config['source']['axes']['z']].values
+        z = var[config["source"]["axes"]["z"]].values
     except KeyError:
         z = 200100
-    x = var[config['source']['axes']['x']].values
-    y = var[config['source']['axes']['y']].values
+    x = var[config["source"]["axes"]["x"]].values
+    y = var[config["source"]["axes"]["y"]].values
 
     header = numpy.zeros((1,), header_type)
-    header['nx'] = var.shape[0]
-    header['ny'] = var.shape[1]
-    header['xlvl'] = z
-    encode_text(header['field'], config['field'])
-    encode_text(header['units'], var.attrs.get('units', 'unknown'))
-    encode_text(header['hdate'], pandas.Timestamp(t).strftime('%Y:%m:%d_%H:%M:%S'))
-    encode_text(header['map_source'], config['source'].get('name', 'unnetcdf'))
-    encode_text(header['desc'], config.get('description', var.attrs.get('standard_name', '')))
+    header["nx"] = var.shape[0]
+    header["ny"] = var.shape[1]
+    header["xlvl"] = z
+    encode_text(header["field"], config["field"])
+    encode_text(header["units"], var.attrs.get("units", "unknown"))
+    encode_text(header["hdate"], pandas.Timestamp(t).strftime("%Y:%m:%d_%H:%M:%S"))
+    encode_text(header["map_source"], config["source"].get("name", "unnetcdf"))
+    encode_text(
+        header["desc"], config.get("description", var.attrs.get("standard_name", ""))
+    )
 
-    if config['source']['projection'] == 'cylindrical_equidistant':
-        header['iproj'] = 0
+    if config["source"]["projection"] == "cylindrical_equidistant":
+        header["iproj"] = 0
         proj = numpy.zeros((1,), proj_cylindrical_equidistant)
-        encode_text(proj['startloc'], 'CENTER')
-        proj['startlat'] = y[0]
-        proj['startlon'] = x[0]
-        proj['deltalat'] = numpy.diff(y)[0]
-        proj['deltalon'] = numpy.diff(x)[0]
-        proj['earth_radius'] = 6367.470215
+        encode_text(proj["startloc"], "CENTER")
+        proj["startlat"] = y[0]
+        proj["startlon"] = x[0]
+        proj["deltalat"] = numpy.diff(y)[0]
+        proj["deltalon"] = numpy.diff(x)[0]
+        proj["earth_radius"] = 6367.470215
     else:
-        raise NotImplementedError(f'Projection {config["source"]["projection"]} not yet supported')
+        raise NotImplementedError(
+            f'Projection {config["source"]["projection"]} not yet supported'
+        )
 
-    version = numpy.zeros((1,), dtype='>i4')
+    version = numpy.zeros((1,), dtype=">i4")
     version[:] = 5
-    wind_grid_rel = numpy.zeros((1,), dtype='>i4')
+    wind_grid_rel = numpy.zeros((1,), dtype=">i4")
 
     write_message(version, output)
     write_message(header, output)
     write_message(proj, output)
     write_message(wind_grid_rel, output)
-    write_message(var.values.astype('>f4'), output)
+    write_message(var.values.astype(">f4"), output)
 
 
 def process_var(config, bounds, output):
@@ -181,19 +196,21 @@ def process_var(config, bounds, output):
         bounds: Boundary dict to pass to `.sel()`
         output: Output buffer
     """
-    ds = xarray.open_mfdataset(config['netcdf_path'], combine='by_coords')
-    var = ds[config['netcdf_variable']].sel(bounds)
+    ds = xarray.open_mfdataset(config["netcdf_path"], combine="by_coords")
+    var = ds[config["netcdf_variable"]].sel(bounds)
 
-    for ax, bound in config['source'].get('bounds',[]).items():
-        var = var.sel({config['source']['axes'][ax]: slice(bound[0], bound[1])})
+    for ax, bound in config["source"].get("bounds", []).items():
+        var = var.sel({config["source"]["axes"][ax]: slice(bound[0], bound[1])})
 
     print(var)
 
-    t = config['source']['axes']['t']
-    z = config['source']['axes']['z']
+    t = config["source"]["axes"]["t"]
+    z = config["source"]["axes"]["z"]
 
     if t in var.coords and z in var.coords:
-        for time, level in tqdm(itertools.product(var[t], var[z]), total=(var[t].size*var[z].size)):
+        for time, level in tqdm(
+            itertools.product(var[t], var[z]), total=(var[t].size * var[z].size)
+        ):
             write_slice(var.sel({t: time, z: level}), config, output)
     elif t in var.coords:
         for time in tqdm(var[t]):
@@ -209,18 +226,32 @@ def namelist_bounds(stream):
     """
     nml = f90nml.read(stream)
 
-    start_date = pandas.to_datetime(nml['share']['start_date'], format='%Y-%m-%d_%H:%M:%S').min()
-    end_date = pandas.to_datetime(nml['share']['end_date'], format='%Y-%m-%d_%H:%M:%S').max()
+    start_date = pandas.to_datetime(
+        nml["share"]["start_date"], format="%Y-%m-%d_%H:%M:%S"
+    ).min()
+    end_date = pandas.to_datetime(
+        nml["share"]["end_date"], format="%Y-%m-%d_%H:%M:%S"
+    ).max()
 
-    return {'time': slice(start_date, end_date)}
+    return {"time": slice(start_date, end_date)}
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('config', help="unnetcdf config file", type=argparse.FileType('r'))
-    parser.add_argument('--wps-namelist', '-n', help="WPS namelist file", type=argparse.FileType('r'))
-    parser.add_argument('--output', '-o', help="Output filename", type=argparse.FileType('wb'), required=True)
+    parser.add_argument(
+        "config", help="unnetcdf config file", type=argparse.FileType("r")
+    )
+    parser.add_argument(
+        "--wps-namelist", "-n", help="WPS namelist file", type=argparse.FileType("r")
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Output filename",
+        type=argparse.FileType("wb"),
+        required=True,
+    )
 
     args = parser.parse_args()
 
@@ -237,5 +268,5 @@ def main():
         process_var(field, bounds, args.output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
