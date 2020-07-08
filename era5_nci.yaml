@@ -1,0 +1,108 @@
+# List of fields for processing with unnetcdf
+# Input data should be on pressure levels
+# Fields without a 'z' axis will be assumed to be surface fields on level 200100
+# See the WRF documentation for a list of required fields and their meaning
+
+-   
+    field: TT                       # WPS field name
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/t/*/t_era5_aus_*.nc
+    netcdf_variable: t              # NetCDF variable to use
+    description: 3d air temperature # Description in intermediate file
+    source: &era5                   # Use a '&' reference to copy into other fields
+        name: era5                  # Source name in intermediate file
+        axes:                       # Axis names
+            t: time
+            z: level
+            x: longitude
+            y: latitude
+        bounds:                     # Domain constraints, only this region is output if given
+            x: [100, 150]
+            y: [0, -60]
+        projection: cylindrical_equidistant
+-
+    field: RH
+    description: 3d relative humidity
+    source: *era5                    # '*ref' copies in the values from '&ref'
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/r/*/r_era5_aus_*.nc
+    netcdf_variable: r
+-
+    field: UU
+    description: 3d wind u
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/u/*/u_era5_aus_*.nc
+    netcdf_variable: u
+-
+    field: VV
+    description: 3d wind v
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/v/*/v_era5_aus_*.nc
+    netcdf_variable: v
+-
+    field: GHT
+    description: 3d geopotential
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/z/*/z_era5_aus_*.nc
+    netcdf_variable: z
+-
+    field: PSFC
+    description: surface pressure
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/sp/*/sp_era5_global_*.nc
+    netcdf_variable: sp
+-
+    field: PMSL
+    description: mean sea-level pressure
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/msl/*/msl_era5_global_*.nc
+    netcdf_variable: msl
+-
+    field: SKINTEMP
+    description: skin temperature
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/land/skt/*/skt_era5land_global_*.nc
+    netcdf_variable: skt
+-
+    field: SOILHGT
+    description: soil height
+    source: *era5
+    netcdf_path:
+    netcdf_variable:
+-
+    field: TT
+    description: 2m air temperature
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/t2/*/t2_era5_global_*.nc
+    netcdf_variable: t2
+-
+    field: RH
+    description: 2m relative humidity
+    source: *era5
+    netcdf_path:
+    netcdf_variable:
+-
+    field: UU
+    description: 10m wind u
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/u10/*/u10_era5_global_*.nc
+    netcdf_variable: u10
+-
+    field: VV
+    description: 10m wind v
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/v10/*/v10_era5_global_*.nc
+    netcdf_variable: v10
+-
+    field: LANDSEA
+    description: land-sea mask
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/static_era5.nc
+    netcdf_variable: lsm
+-
+    field: SMtttbbb
+    description: soil moisture
+    source: *era5
+    netcdf_path: /g/data/ub4/era5/netcdf/land/swvl1/*/swvl1_era5land_global_*.nc
+    netcdf_variable: swvl1
+-
+    field: STtttbbb
+    description: soil temperature
