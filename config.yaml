@@ -1,0 +1,26 @@
+# List of fields for processing with unnetcdf
+# Input data should be on pressure levels
+# Fields without a 'z' axis will be assumed to be surface fields on level 200100
+# See the WRF documentation for a list of required fields and their meaning
+
+-   
+    field: TT                       # WPS field name
+    netcdf_path: /g/data/ub4/era5/netcdf/pressure/t/2006/t_era5_aus_*.nc
+    netcdf_variable: t              # NetCDF variable to use
+    description: air_temperature    # Description in intermediate file
+    source: &era5                   # Use a '&' reference to copy into other fields
+        name: era5                  # Source name in intermediate file
+        axes:                       # Axis names
+            t: time
+            z: level
+            x: longitude
+            y: latitude
+        bounds:                     # Domain constraints, only this region is output if given
+            x: [100, 150]
+            y: [0, -60]
+        projection: cylindrical_equidistant
+-   
+    field: SST
+    netcdf_path: /g/data/ub4/era5/netcdf/surface/sst/2006/sst_era5_global_*.nc
+    netcdf_variable: sst
+    source: *era5                   # '*ref' copies in the values from '&ref'
